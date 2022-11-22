@@ -1,27 +1,29 @@
-﻿ using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-    public enum Result
-    {
-        leftup = 0,
-        up,
-        rightup,
-        right,
-        rightdown,
-        down,
-        leftdown,
-        left,
-        triangle1,
-        triangle2,
-        Circle,
-        Square,
-        Z,
-        none
-    }
 
-public class touchscript : MonoBehaviour {
+public enum Result
+{
+    leftup = 0,
+    up,
+    rightup,
+    right,
+    rightdown,
+    down,
+    leftdown,
+    left,
+    triangle1,
+    triangle2,
+    Circle,
+    Square,
+    Z,
+    none
+}
 
-    enum direction
+public class TouchSignRecog : MonoBehaviour
+{
+
+    enum Direction
     {
         leftup = 1,
         up,
@@ -35,96 +37,90 @@ public class touchscript : MonoBehaviour {
 
     Result Gesture_Result = Result.none;
 
-    float[] degree = new float[50];
+    float[] degree = new float[50];          // 각도 저장하는 배열
 
     int[] Vals = new int[250];               // 방향 저장 배열
-    int index = 0;                          // 위 배열 인덱스 값
+    int index = 0;                          // 변곡점 갯수
 
-    int Dir_88 = 0;                         // 8 방향
+    Direction Dir_88 = 0;                         // 8 방향
     Vector2 StartPoint;
     Vector2 LastPoint;
     Vector2 Point;
 
     public Camera MainCamera;
-    public GameObject trailobject;
 
-    AttackDecision AttackDecision_sc;
-   
-	void Awake () {
+    void Awake()
+    {
+        clear();
+    }
+    void clear()
+    {
         Gesture_Result = Result.none;
-        AttackDecision_sc = GetComponent<AttackDecision>();
+        Dir_88 = 0;
+        index = 0;
     }
 
-    void Update () {
-        if (Singleton.getInstance.GameMode == true)
+    void Update()
+    {
+        if (Input.GetMouseButtonDown(0))
         {
-            if (Input.GetMouseButtonDown(0))
+            Point = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
+            StartPoint = Point;
+        }
+        if (Input.GetMouseButton(0))
+        {
+            if (!(Input.mousePosition.x - Point.x > -25 && Input.mousePosition.x - Point.x < 25) || !(Input.mousePosition.y - Point.y > -25 && Input.mousePosition.y - Point.y < 25)) // 사용자의 미세함 떨림으로 인한 오차 범위 ㅇㅇ
             {
-                Dir_88 = 0;
-                index = 0;
+                DegreeCheck();
                 Point = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
-                StartPoint = Point;
-            }
-            if (Input.GetMouseButton(0))
-            {
-                if (!(Input.mousePosition.x - Point.x > -25 && Input.mousePosition.x - Point.x < 25) || !(Input.mousePosition.y - Point.y > -25 && Input.mousePosition.y - Point.y < 25)) // 사용자의 미세함 떨림으로 인한 오차 범위 ㅇㅇ
-                {
-                    DegreeCheck();
-                    Point = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
-                }
-               if(Singleton.getInstance.GameMode == true) trailobject.transform.position = MainCamera.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, 1));   // 트레일 랜더러로 선 긋기 남기는거 
-            }
-            if (Input.GetMouseButtonUp(0))
-            {
-                LastPoint = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
-                GestureRecognize();
             }
         }
-	}
-    void DegreeCheck()
+        if (Input.GetMouseButtonUp(0))
+        {
+            LastPoint = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
+            GestureRecognize();
+            clear();
+        }
+    }
+    void DegreeCheck()                  // 8 방향 체크
     {
         Vector2 v = new Vector2(Input.mousePosition.x, Input.mousePosition.y) - Point;
-        float Atan2s = Mathf.Atan2(v.y, v.x) * Mathf.Rad2Deg + 180 ;
-        
-        if (Atan2s <= 315 - 22.5f && Atan2s > 270 - 22.5f) Dir_88 = (int)direction.leftup;
-        else if (Atan2s <= 270 - 22.5f && Atan2s > 225 - 22.5f) Dir_88 = (int)direction.up;
-        else if (Atan2s <= 225 - 22.5f && Atan2s > 180 - 22.5f) Dir_88 = (int)direction.rightup;
-        else if (Atan2s < 180 - 22.5f && Atan2s > 135 - 22.5f) Dir_88 = (int)direction.right;
-        else if (Atan2s <= 135 - 22.5f && Atan2s > 90 - 22.5f) Dir_88 = (int)direction.rightdown;
-        else if (Atan2s <= 90 - 22.5f && Atan2s > 45 - 22.5f) Dir_88 = (int)direction.down;
-        else if ((Atan2s >= 0 && Atan2s <= 22.5f) ||(Atan2s > 337.5f && Atan2s < 360)) Dir_88 = (int)direction.leftdown;
-        else if (Atan2s <= 337.5f && Atan2s > 315 - 22.5f) Dir_88 = (int)direction.left;
-        if (Vals[index] != Dir_88)
+        float Atan2s = Mathf.Atan2(v.y, v.x) * Mathf.Rad2Deg + 180;
+
+        if (Atan2s <= 315 - 22.5f && Atan2s > 270 - 22.5f) Dir_88 = Direction.leftup;
+        else if (Atan2s <= 270 - 22.5f && Atan2s > 225 - 22.5f) Dir_88 = Direction.up;
+        else if (Atan2s <= 225 - 22.5f && Atan2s > 180 - 22.5f) Dir_88 = Direction.rightup;
+        else if (Atan2s < 180 - 22.5f && Atan2s > 135 - 22.5f) Dir_88 = Direction.right;
+        else if (Atan2s <= 135 - 22.5f && Atan2s > 90 - 22.5f) Dir_88 = Direction.rightdown;
+        else if (Atan2s <= 90 - 22.5f && Atan2s > 45 - 22.5f) Dir_88 = Direction.down;
+        else if ((Atan2s >= 0 && Atan2s <= 22.5f) || (Atan2s > 337.5f && Atan2s < 360)) Dir_88 = Direction.leftdown;
+        else if (Atan2s <= 337.5f && Atan2s > 315 - 22.5f) Dir_88 = Direction.left;
+        if (Vals[index] != (int)Dir_88)
         {
             if (Dir_88 != 0)
             {
                 index++;
-                Vals[index] = Dir_88;
+                Vals[index] = (int)Dir_88;
                 degree[index] = Atan2s;
-             //   Debug.Log(Dir_88);
             }
         }
-     
-      //  Debug.Log(Dir_88);
+
     }
     void StraightLine_Check()
     {
         if (index == 2)
         {
-            Debug.Log("f");
             Debug.Log(Vals[1] - Vals[2]);
             if (Vals[0] - Vals[1] == 1 || Vals[0] - Vals[1] == -1)
             {
-                Debug.Log("lf");
-
-                if (degree[0] - degree[1] > -30) index = 1;    // 밑에 if문에 넣기 위함 
-                else if (degree[0] - degree[1] < 30) index = 1;  // 밑에 if문에 넣기 위함 
+                if (degree[0] - degree[1] > -30) index = 1;    
+                else if (degree[0] - degree[1] < 30) index = 1;  
             }
         }
 
         if (index == 1)
         {
-            
+
             switch (Vals[1])
             {
                 case 1:
@@ -161,7 +157,7 @@ public class touchscript : MonoBehaviour {
                     break;
             }
         }
-     
+
     }
     void Circle_Check()
     {
@@ -173,7 +169,7 @@ public class touchscript : MonoBehaviour {
     }
     void Z_Check()
     {
-        if (index <5)
+        if (index < 5)
         {
             if (Vals[1] == 3)
                 if (Vals[2] == 5 || Vals[2] == 6)
@@ -199,7 +195,7 @@ public class touchscript : MonoBehaviour {
                         }
                     }
             }
-            if (Vals[1] == 3)
+           else if (Vals[1] == 3)
             {
                 for (int i = 2; i <= 4; i++)
                     if (Vals[i] == 6)
@@ -216,7 +212,7 @@ public class touchscript : MonoBehaviour {
                         }
                     }
             }
-            if (Vals[1] == 7)
+            else if (Vals[1] == 7)
             {
                 for (int i = 2; i <= 4; i++)
                 {
@@ -237,28 +233,13 @@ public class touchscript : MonoBehaviour {
             }
         }
     }
-    void Square_Check()
-    {
-        if (index > 3 && index < 8)
-        {
-            bool[] b = new bool[4];
-            for (int i = 1; i <= index; i++)
-            {
-                if (Vals[1] == 3 && b[0] == false) b[0] = true;
-                else if (b[0] == true && b[1] == false && Vals[i] == 5) b[1] = true;
-                else if (b[0] == true && b[1] == true && b[2] == false && Vals[i] == 7) b[2] = true;
-                else if (b[0] == true && b[1] == true && b[2] == true && b[3] == false && Vals[index] == 1) Debug.Log("Square"); Gesture_Result = Result.triangle1;
-            }
-        }
-    }
+
     void GestureRecognize()
     {
         Triangle_Check();
         StraightLine_Check();
         Circle_Check();
-       // Square_Check();
         Z_Check();
-    
-        AttackDecision_sc.Attack_Decision(Gesture_Result);
+
     }
 }
